@@ -7,6 +7,7 @@
 
 namespace craft\commerce\taxjar\services;
 
+use TaxJar\Exception as TaxJar_Exception;
 use TaxJar\Client;
 use craft\commerce\taxjar\TaxJar;
 use yii\base\Component;
@@ -88,6 +89,14 @@ class Api extends Component
                 'sales_tax' => $lineItem->tax
             ];
         }
-        return $this->_client->createOrder($taxOrderData);
+        try {
+            return $this->_client->createOrder($taxOrderData);
+        } catch (TaxJar_Exception $e) {
+            // If error is 422 then we've already reported this transaction and we can ignore the error
+            if ($e->getStatusCode() === 422) {
+                return [];
+            }
+            throw $e;
+        }
     }
 }
