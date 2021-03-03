@@ -85,7 +85,8 @@ class Api extends Component
                 'quantity' => $lineItem->qty,
                 'product_identifier' => $lineItem->sku,
                 'description' => $lineItem->description,
-                'unit_price' => $lineItem->total,
+                'unit_price' => $lineItem->salePrice,
+                'discount' => $lineItem->discount,
                 'sales_tax' => $lineItem->tax
             ];
         }
