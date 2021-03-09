@@ -12,8 +12,10 @@ use Craft;
 use craft\base\Plugin as BasePlugin;
 use craft\commerce\elements\Order;
 use craft\commerce\events\TaxEngineEvent;
+use craft\commerce\events\TransactionEvent;
 use craft\commerce\models\Address;
 use craft\commerce\Plugin;
+use craft\commerce\services\Payments;
 use craft\commerce\services\Taxes;
 use craft\commerce\taxjar\adjusters\Tax;
 use craft\commerce\taxjar\models\Settings;
@@ -74,7 +76,24 @@ class TaxJar extends BasePlugin
                 $this->getApi()->createOrder($order);
             }
         );
-        
+
+        Event::on(
+            Payments::class,
+            Payments::EVENT_AFTER_CAPTURE_TRANSACTION,
+            function(TransactionEvent $event) {
+                $transaction = $event->transaction;
+                $this->getApi()->createOrderCaptured($transaction);
+            }
+        );
+
+        Event::on(
+            Payments::class,
+            Payments::EVENT_AFTER_REFUND_TRANSACTION,
+            function(TransactionEvent $event) {
+                $transaction = $event->transaction;
+                $this->getApi()->createOrderRefunded($transaction);
+            }
+        );
     }
 
     /**

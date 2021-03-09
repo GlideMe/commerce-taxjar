@@ -7,6 +7,7 @@
 
 namespace craft\commerce\taxjar\services;
 
+use craft\commerce\models\Transaction;
 use TaxJar\Exception as TaxJar_Exception;
 use TaxJar\Client;
 use craft\commerce\taxjar\TaxJar;
@@ -99,5 +100,51 @@ class Api extends Component
             }
             throw $e;
         }
+    }
+
+    public function createOrderCaptured(Transaction $transaction) {
+        $order = $transaction->order;
+        $taxOrderData = [
+            'transaction_id' => $transaction->id,
+            'transaction_date' => $transaction->dateUpdated->format('Y/m/d'),
+            'to_country' => $order->shippingAddress->country->iso,
+            'to_zip' => $order->shippingAddress->zipCode,
+            'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
+            'to_city' => $order->shippingAddress->city,
+            'to_street' => $order->shippingAddress->address1,
+            'amount' => $order->total - $order->totalTax,
+            'shipping' => $order->totalShippingCost,
+            'sales_tax' => $order->totalTax,
+            'line_items' => []
+        ];
+        foreach ($order->lineItems as $lineItem)
+        {
+            $taxOrderData['line_items'][] = [
+                'quantity' => $lineItem->qty,
+                'product_identifier' => $lineItem->sku,
+                'description' => $lineItem->description,
+                'unit_price' => $lineItem->total,
+                'sales_tax' => $lineItem->tax
+            ];
+        }
+        return $this->_client->createOrder($taxOrderData);
+    }
+
+    public function createOrderRefunded(Transaction $transaction) {
+        $order = $transaction->order;
+        $taxOrderData = [
+            'transaction_id' => $transaction->id,
+            'transaction_date' => $transaction->dateUpdated->format('Y/m/d'),
+            'to_country' => $order->shippingAddress->country->iso,
+            'to_zip' => $order->shippingAddress->zipCode,
+            'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
+            'to_city' => $order->shippingAddress->city,
+            'to_street' => $order->shippingAddress->address1,
+            'amount' => $order->total - $order->totalTax,
+            'shipping' => $order->totalShippingCost,
+            'sales_tax' => $order->totalTax,
+            'line_items' => []
+        ];
+        $this->_client->createRefund($taxOrderData);
     }
 }
