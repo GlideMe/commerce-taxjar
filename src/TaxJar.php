@@ -17,6 +17,7 @@ use craft\commerce\models\Address;
 use craft\commerce\Plugin;
 use craft\commerce\services\Payments;
 use craft\commerce\services\Taxes;
+use craft\commerce\services\Transactions;
 use craft\commerce\taxjar\adjusters\Tax;
 use craft\commerce\taxjar\models\Settings;
 use craft\commerce\taxjar\services\Api;
@@ -87,11 +88,13 @@ class TaxJar extends BasePlugin
         );
 
         Event::on(
-            Payments::class,
-            Payments::EVENT_AFTER_REFUND_TRANSACTION,
+            Transactions::class,
+            Transactions::EVENT_AFTER_SAVE_TRANSACTION,
             function(TransactionEvent $event) {
                 $transaction = $event->transaction;
-                $this->getApi()->createOrderRefunded($transaction);
+                if($transaction->type === "refund") {
+                    $this->getApi()->createOrderRefunded($transaction);
+                }
             }
         );
     }

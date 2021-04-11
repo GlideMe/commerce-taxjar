@@ -106,7 +106,7 @@ class Api extends Component
         $order = $transaction->order;
         $taxOrderData = [
             'transaction_id' => $transaction->id,
-            'transaction_date' => $transaction->dateUpdated->format('Y/m/d'),
+            'transaction_date' => ($transaction->dateUpdated ?? new \DateTime())->format('Y/m/d'),
             'to_country' => $order->shippingAddress->country->iso,
             'to_zip' => $order->shippingAddress->zipCode,
             'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
@@ -134,15 +134,15 @@ class Api extends Component
         $order = $transaction->order;
         $taxOrderData = [
             'transaction_id' => $transaction->id,
-            'transaction_date' => $transaction->dateUpdated->format('Y/m/d'),
+            'transaction_date' => ($transaction->dateUpdated ?? new \DateTime())->format('Y/m/d'),
             'to_country' => $order->shippingAddress->country->iso,
             'to_zip' => $order->shippingAddress->zipCode,
             'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
             'to_city' => $order->shippingAddress->city,
             'to_street' => $order->shippingAddress->address1,
-            'amount' => $order->total - $order->totalTax,
+            'amount' => $transaction->amount,
             'shipping' => $order->totalShippingCost,
-            'sales_tax' => $order->totalTax,
+            'sales_tax' => round(($transaction->amount / $order->totalPrice) * $order->totalTax, 2),
             'line_items' => []
         ];
         $this->_client->createRefund($taxOrderData);
