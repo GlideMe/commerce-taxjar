@@ -132,6 +132,7 @@ class Api extends Component
 
     public function createOrderRefunded(Transaction $transaction) {
         $order = $transaction->order;
+        $tax = round(($transaction->amount / $order->totalPrice) * $order->totalTax, 2);
         $taxOrderData = [
             'transaction_id' => $transaction->id,
             'transaction_date' => ($transaction->dateUpdated ?? new \DateTime())->format('Y/m/d'),
@@ -140,9 +141,9 @@ class Api extends Component
             'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
             'to_city' => $order->shippingAddress->city,
             'to_street' => $order->shippingAddress->address1,
-            'amount' => $transaction->amount,
+            'amount' => $transaction->amount - $tax,
             'shipping' => $order->totalShippingCost,
-            'sales_tax' => round(($transaction->amount / $order->totalPrice) * $order->totalTax, 2),
+            'sales_tax' => $tax,
             'line_items' => []
         ];
         $this->_client->createRefund($taxOrderData);
