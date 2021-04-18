@@ -46,6 +46,8 @@ class TaxJar extends BasePlugin
      */
     public $schemaVersion = '1.0.0';
 
+    private static $handled = [];
+
     // Public Methods
     // =========================================================================
 
@@ -74,7 +76,11 @@ class TaxJar extends BasePlugin
             function(Event $event) {
                 // @var Order $order
                 $order = $event->sender;
-                $this->getApi()->createOrder($order);
+                $isHandleable = empty(self::$handled[Order::class][Order::EVENT_AFTER_ORDER_PAID][$order->id]);
+                if(true === $isHandleable) {
+                    $this->getApi()->createOrder($order);
+                    self::$handled[Order::class][Order::EVENT_AFTER_ORDER_PAID][$order->id] = true;
+                }
             }
         );
 
