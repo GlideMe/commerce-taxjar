@@ -123,7 +123,8 @@ class Api extends Component
                 'quantity' => $lineItem->qty,
                 'product_identifier' => $lineItem->sku,
                 'description' => $lineItem->description,
-                'unit_price' => $lineItem->total,
+                'unit_price' => $lineItem->salePrice,
+                'discount' => $lineItem->discount,
                 'sales_tax' => $lineItem->tax
             ];
         }
@@ -136,6 +137,7 @@ class Api extends Component
         $taxOrderData = [
             'transaction_id' => $transaction->id,
             'transaction_date' => ($transaction->dateUpdated ?? new \DateTime())->format('Y/m/d'),
+            'transaction_reference_id' => $transaction->parentId,
             'to_country' => $order->shippingAddress->country->iso,
             'to_zip' => $order->shippingAddress->zipCode,
             'to_state' => $order->shippingAddress->state ? $order->shippingAddress->state->abbreviation : $order->shippingAddress->stateName,
