@@ -82,7 +82,7 @@ class TaxJar extends BasePlugin
             Transactions::EVENT_AFTER_SAVE_TRANSACTION,
             function(TransactionEvent $event) {
                 $transaction = $event->transaction;
-                if($transaction->type === "refund") {
+                if($transaction->type === 'refund' && $transaction->status === 'success') {
                     $this->getApi()->createOrderRefunded($transaction);
                 }
             }
