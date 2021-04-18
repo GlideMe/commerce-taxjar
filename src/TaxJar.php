@@ -69,16 +69,6 @@ class TaxJar extends BasePlugin
         });
 
         Event::on(
-            Order::class,
-            Order::EVENT_AFTER_ORDER_PAID,
-            function(Event $event) {
-                // @var Order $order
-                $order = $event->sender;
-                $this->getApi()->createOrder($order);
-            }
-        );
-
-        Event::on(
             Payments::class,
             Payments::EVENT_AFTER_CAPTURE_TRANSACTION,
             function(TransactionEvent $event) {
