@@ -12,9 +12,12 @@ use Craft;
 use craft\base\Plugin as BasePlugin;
 use craft\commerce\elements\Order;
 use craft\commerce\events\TaxEngineEvent;
+use craft\commerce\events\TransactionEvent;
 use craft\commerce\models\Address;
 use craft\commerce\Plugin;
+use craft\commerce\services\Payments;
 use craft\commerce\services\Taxes;
+use craft\commerce\services\Transactions;
 use craft\commerce\taxjar\adjusters\Tax;
 use craft\commerce\taxjar\models\Settings;
 use craft\commerce\taxjar\services\Api;
@@ -42,6 +45,8 @@ class TaxJar extends BasePlugin
      * @var string
      */
     public $schemaVersion = '1.0.0';
+
+    private static $handled = [];
 
     // Public Methods
     // =========================================================================
@@ -71,10 +76,33 @@ class TaxJar extends BasePlugin
             function(Event $event) {
                 // @var Order $order
                 $order = $event->sender;
-                $this->getApi()->createOrder($order);
+                $isHandleable = empty(self::$handled[Order::class][Order::EVENT_AFTER_ORDER_PAID][$order->id]);
+                if(true === $isHandleable) {
+                    $this->getApi()->createOrder($order);
+                    self::$handled[Order::class][Order::EVENT_AFTER_ORDER_PAID][$order->id] = true;
+                }
             }
         );
-        
+
+        Event::on(
+            Payments::class,
+            Payments::EVENT_AFTER_CAPTURE_TRANSACTION,
+            function(TransactionEvent $event) {
+                $transaction = $event->transaction;
+                $this->getApi()->createOrderCaptured($transaction);
+            }
+        );
+
+        Event::on(
+            Transactions::class,
+            Transactions::EVENT_AFTER_SAVE_TRANSACTION,
+            function(TransactionEvent $event) {
+                $transaction = $event->transaction;
+                if($transaction->type === 'refund' && $transaction->status === 'success') {
+                    $this->getApi()->createOrderRefunded($transaction);
+                }
+            }
+        );
     }
 
     /**
