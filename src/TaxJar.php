@@ -85,15 +85,6 @@ class TaxJar extends BasePlugin
         );
 
         Event::on(
-            Payments::class,
-            Payments::EVENT_AFTER_CAPTURE_TRANSACTION,
-            function(TransactionEvent $event) {
-                $transaction = $event->transaction;
-                $this->getApi()->createOrderCaptured($transaction);
-            }
-        );
-
-        Event::on(
             Transactions::class,
             Transactions::EVENT_AFTER_SAVE_TRANSACTION,
             function(TransactionEvent $event) {
